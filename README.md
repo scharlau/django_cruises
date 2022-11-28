@@ -62,9 +62,7 @@ We can now set about creating the space for our polar bear content by running th
 
 This will create a new folder 'cruises' containing relevant config files for us including space for database migrations, and other details specific to our content. 
 
-Step 6) Inside the 'cruises' folder create a new folder called 'city_data'. We can now take the downloaded city data and put the 'urbanspatial-hist-urban-pop-3700bc-ad2000-xlsx' file into the 'city_data' folder. We'll need this later when we load the data into the database.
-
-We need to modify the settings.py file in the historic_cruises app, so that it knows to include the 'cruises' contents. We do this by adding a line in the section on 'INSTALLED_APPS'. Add this line to the end of the block ( plus the , at the end of the line above it).
+Step 6) We need to modify the settings.py file in the historic_cruises app, so that it knows to include the 'cruises' contents. We do this by adding a line in the section on 'INSTALLED_APPS'. Add this line to the end of the block ( plus the , at the end of the line above it).
 
         'cruises',
 
@@ -107,7 +105,7 @@ Add the missing lines so that your file looks like this:
                 return f'{self.id}, {self.ship_id}, {self.name}, {self.beds}, {self.deck}'
 
         class Cruise(models.Model):
-            id = models.BigAutoField()
+            id = models.BigAutoField(primary_key=True)
             ship_id = models.ForeignKey('cruises.Ship', on_delete=models.CASCADE, related_name='cruises')
             name = models.TextField()
 
@@ -127,7 +125,6 @@ Second, we run the generated migration with the command:
 
         python3 manage.py migrate cruises
     
-
  In the future, anytime that you edit the model, you need to run makemigration, and then migrate commands to have the database changes happen.
 
 Now we have the migration done and the table is created in our database, and we can load our data into the database. We do this using Django's admin commands, which provide access to the models, and thus the database for us. See more here: https://docs.djangoproject.com/en/3.1/howto/custom-management-commands/ 

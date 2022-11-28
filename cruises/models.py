@@ -22,7 +22,7 @@ class Cabin(models.Model):
         return f'{self.id}, {self.ship_id}, {self.name}, {self.beds}, {self.deck}'
 
 class Cruise(models.Model):
-    id = models.BigAutoField()
+    id = models.BigAutoField(primary_key=True)
     ship_id = models.ForeignKey('cruises.Ship', on_delete=models.CASCADE, related_name='cruises')
     name = models.TextField()
 
