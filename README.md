@@ -1,9 +1,9 @@
 # django_cruises
 A travel agent for cruises done in Django based on the travel agent example from the O'Reilly Enterprise JavaBeans book. This is, indeed, a take on that old scenario. https://books.google.co.uk/books/about/Enterprise_JavaBeans_3_0.html?id=kD-bAgAAQBAJ&redir_esc=y, which I've also done in Ruby on Rails at https://github.com/scharlau/rails-travelagent 
 
+We're not interested in styling, so this is a plain site with the focus on 'how' to build the application.
 
-
-Step 2) We can start developing our application to display the data. Create a new project folder called 'polar_bears' and then cd into the folder via the terminal and execute these commands:
+Step 1) We can start developing our application to display the data. Create a new project folder called 'polar_bears' and then cd into the folder via the terminal and execute these commands:
 
         pyenv local 3.10.7 # this sets the local version of python to 3.10.7
         python3 -m venv .venv # this creates the virtual environment for you
@@ -16,13 +16,13 @@ We will use Django (https://www.djangoproject.com) as our web framework for the 
 
 And that will install django version 4.x (or newer) with its associated dependencies. We can now start to build the application.
 
-Step 3) Now we can start to create the site using the django admin tools. Issue this command, and don't forget the '.' at the end of the line, which says 'create it in this directory'. This will create the admin part of our application, which will sit alongside the actual site. 
+Step 2) Now we can start to create the site using the django admin tools. Issue this command, and don't forget the '.' at the end of the line, which says 'create it in this directory'. This will create the admin part of our application, which will sit alongside the actual site. 
 
         django-admin startproject cruise_agent .
 
 We're using the name 'historic_cruises' but you could use whatever seems appropriate. We'll save the 'cruises' label for later in the app. For now we're setting up the support structure for the site, which will live in a separate folder.
 
-We need to specify some settings for the site, which we do in the historic_cruises/settings.py file. Open this and add this line above the line for pathlib import Path:
+Step 3) We need to specify some settings for the site, which we do in the historic_cruises/settings.py file. Open this and add this line above the line for pathlib import Path:
 
         import os
 
@@ -145,72 +145,58 @@ Put this code into that file:
         from pathlib import Path
         from django.db import models
         from django.core.management.base import BaseCommand, CommandError
-        from openpyxl import load_workbook
+        import random
+        from faker import Faker
 
-        from cruises .models import City
+        from cruises .models import Cruise, Ship, Cabin
 
         class Command(BaseCommand):
             help = 'Load data from csv'
 
             def handle(self, *args, **options):
-                City.objects.all().delete()
-                print('table dropped')
+                Cruise.objects.all().delete()
+                Cabin.objects.all().delete()
+                Ship.objects.all().delete()
+                print('tables dropped')
 
-                base_dir = Path(__file__).resolve().parent.parent.parent.parent
-                book_path = os.path.join(base_dir, 'cruises
-            /city_data/urbanspatial-hist-urban-pop-3700bc-ad2000-xlsx.xlsx')
-                book = load_workbook(book_path)
-                sheet = book['Historical Urban Population']
-                print(sheet.title)
-                max_row_num = sheet.max_row
-                max_col_num = sheet.max_column
-                print(max_row_num)
-                print(max_col_num)
+                fake = Faker()
 
-                # placeholder variables for city object
-                city = "temp_name"
-                otherName = "None"
-                country = "temp_country"
-                latitude = 0.0
-                longitude = 0.0
-                year = 1111
-                pop = 111
-                city_id = "temp_id"
+                # create some ships - name and tonnage
+                for i in range(5):
+                    ship = Ship.objects.create(
+                    name = fake.catch_phrase(),
+                    tonnage = random.randrange(1,100)*100,
+                    )
+                    ship.save()
+                print("ships created")
 
-                # as this is a spreadsheet and not a csv file, we need to iterate cell by cell over a range of cells
-                # skip first row as headers, and skip first column as we don't need it
-                for i in range(2, max_row_num+1):
+                # create some cabins for the ships
+                ships = Ship.objects.all()
+                for ship in ships:
+                    for i in range(10):
+                        cabin = Cabin.objects.create(
+                            ship_id = ship,
+                            name = fake.first_name(),
+                            beds = random.randrange(1,4),
+                            deck = random.randrange(1,4),
+                        )
+                        cabin.save()
+                print('cabins created')
 
-                    for j in range(2, max_col_num+1):
-                        cell_obj=sheet.cell(row=i, column=j)
-                        if cell_obj.column_letter=='B':
-                            city = cell_obj.value
-                        if cell_obj.column_letter=='C':
-                            if cell_obj.value is not None:
-                                otherName = cell_obj.value
-                        if cell_obj.column_letter=='D':
-                            country = cell_obj.value
-                        if cell_obj.column_letter=='E':
-                            latitude = cell_obj.value
-                        if cell_obj.column_letter=='F':
-                            longitude = cell_obj.value
-                        if cell_obj.column_letter=='H':
-                            year = cell_obj.value
-                        if cell_obj.column_letter=='I':
-                            pop = cell_obj.value
-                        if cell_obj.column_letter=='J':
-                            city_id = cell_obj.value
-                        
-                        print(cell_obj.value, end='|')
-                    # end loop so construct city object
-                    city = City.objects.create(city=city,otherName=otherName,country=country,latitude=latitude,longitude=longitude,year=year,pop=pop,city_id=city_id)
-                    city.save()
-                    print(' saved ')
-                    print('\n')
+                # create cruises
+                ships = Ship.objects.all()
+                for ship in ships:
+                    cruise = Cruise.objects.create(
+                        ship_id =ship,
+                        name = fake.company(),
+                    )
+                    cruise.save()
+                print('cruises created')
 
-With this we can drop the data from the table, and then load it in, as required. We don't use any libraries for this as we want to pull specific fields from the file. Run the file with the command:
 
-        python3 manage.py parse_cruises
+With this we can drop the data from the table, and then load it in, as required. We use Faker in a few places to create entries, and the random library for other fields requiring an integer. Run the file with the command:
+
+        python3 manage.py create_cruises
     
 
 This should run fine.
@@ -223,24 +209,22 @@ This will open the database, and you can use these commands to confirm all is th
 
         .tables
 
-Which should show you 'cruises_city', and then you can run this query:
+Which should show you 'cruises_cruise, cruises_cabin, and cruises_ship', and then you can run this query:
 
-        select * from cruises
-    _city where city='Tokyo';
+        select * from cruises_cruise;
 
 That should give you a number of entries back, and then you can leave the shell with the command:
 
         .exit
 
 ## Creating Views
-Step 12) We can now create views for our data so that we can see all of the bears, plus also have a page to view details about each individual one.
+Step 12) We can now create views for our data so that we can see all of the cruise and ship details.
 
-Open historic_cruises/urls.py and add 'include' to the import list, and add the second line as well below the one for 'admin.site.urls':
+Open cruise_agent/urls.py and add 'include' to the import list, and add the second line as well below the one for 'admin.site.urls':
 
         from django.urls import path, include
 
-        path('', include('cruises
-    .urls')),
+        path('', include('cruises.urls')),
 
 This tells our application to look for content in the 'cruises' app. 
 
@@ -250,112 +234,49 @@ Step 13) Next go into the 'cruises' folder and create an empty 'urls.py' file fo
         from . import views
 
         urlpatterns = [
-            path('', views.city_list, name='city_list'),
-            path('cruises
-        /<str:city>', views.city__by_name, name='cityname'),
+            path('', views.index, name='index'),
             ]
 
-This provides us with the urls for two paths: one to show all of the cruises, and another to show us the list of entries for a specific city name. The <str:city> part says the parameter called 'city' takes a string and then returns the view 'city_by_name', which we'll add in a moment.
+This provides us with the url for main path to show all of the cruises. Now we can create the view code to gather the cruises and send them to the template.
 
- As we have over 10,000 records in our database, we need to use pagination to make the site easier to use. You'll find more details about this at https://docs.djangoproject.com/en/4.1/topics/pagination/ We'll see this used in our views, and then later in the html file.
-
+ 
 Step 14) We can now open 'cruises/views.py' to add the view methods to generate a list of cruises.
 
-        from django.core.paginator import Paginator
         from django.shortcuts import render
-        from .models import City
+        from .models import Cruise, Ship, Cabin
 
         # Create your views here.
-        def city_list(request):
-            cruises
-         = City.cruises
-        ()
-            paginator = Paginator(cruises
-        , 50) #show 50 cruises
-         per page
-            page_number = request.GET.get('page')
-            page_obj = paginator.get_page(page_number)
-            return render(request, 'cruises
-        /city_list.html', {'page_obj': page_obj})
+        def index(request):
+            cruises = Cruise.objects.all()
+            return render(request, 'cruises/index.html', {'cruises': cruises})
 
-        def city__by_name(request, city):
-            cruises
-         = City.city_by_name(city)
-            paginator = Paginator(cruises
-        , 50) #show 50 cruises
-         per page
-            page_number = request.GET.get('page')
-            page_obj = paginator.get_page(page_number)
-            return render(request, 'cruises
-        /city_list.html', {'page_obj': page_obj})
-
-Step 15) Our two views reuse the same html file for simplicity. Both also rely upon methods in the City class, in order to keep more code tied to cruises there, instead of putting it into the view. Add these two methods to the cruises/models.py file:
-
-        def cruises
-    ():
-            cruises
-         = City.objects.all()
-            return cruises
-        
-        
-        def city_by_name(city):
-            city_list = City.objects.filter(city=city)
-            return city_list
-
-Step 16) Next, we need to create the actual html page to display our cruises. We'll put folders in the place that Django looks for them, which seems like extra work, but is convention, so go with it. You'll find your app, and others that you look at follow the convention, so you need to get used to it.
+Step 15) Next, we need to create the actual html page to display our cruises. We'll put folders in the place that Django looks for them, which seems like extra work, but is convention, so go with it. You'll find your app, and others that you look at follow the convention, so you need to get used to it.
 
 As before, create a 'templates' folder under 'cruises' and then another 'cruises' folder under that.
 Then create a file at 'cruises/templates/cruises/city_list.html' which has this simple code:
        
        <html><head>
-       <title>Historic cruises
-    </title>
+       <title>Pythonic cruises
+        </title>
         </head><body>
-            <h1>Historic cruises
-        </h1>
-            {% for city in page_obj %}
-            <b> <a href={% url 'cityname' city=city.city %}>{{city.city }}</a></b>
-            This is {{ city.city }} also sometimes known as {{ city.otherName }} in 
-            {{city.country}}, with the {{ city.pop }} in {{ city.year }}, and located at 
-            {{ city.latitude }} and {{ city.longitude }}
+            <h1>Pythonic Cruises</h1>
+            {% for cruise in cruises %}
+            <p><b> {{ cruise.id }}</b>
+            This is {{ cruise.name }} cruise on the ship '{{cruise.ship_id.name}}'
             </p>
             {% endfor %}
-            
-            {% if page_obj.has_previous %}
-                <a href="?page=1">&laquo; first</a>
-                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
-            {% endif %}
-
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}">next</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
-            {% endif %}
         </body></html>
  
-This will show the full list of cruises, and includes pagination so that we don't try to show all 10K plus entries at once. 
-
-First, the html adds a link to retrieve all entries for a city on the bear_list.html page around 'city' like this:
-
-         <b> <a href="{% url 'cityname' city=city.city %}">{{ city.city }}</a></b>
-
-This will link the city_list page to the city.city value (the name of the city), which we'll pass to the query for the page.
-
-Second, this makes use of the line in cruises/urls.py for the view, which asks for cruises/<str:city>:
-
-        path('cruises
-    /<str:city>', views.city__by_name, name='cityname'),
-
-This tells the view to expect a string as 'city' to be used in the query.
+This will show the full list of cruises showing the ship name. 
 
 Now you can reload the page, and you should be able to see the cruises pages. 
 
 Finally, we're ready to do some more work with this as suggested below.
 
 Things to try:
-1. organise cruises by country
-2. Add chart showing population for each city.
-3. Add map showing location of each city.
+1. organise cruises by ship
+2. Add page showing each cruise, it's ship and cabins.
+3. Add more details to the cruises with start/end dates.
+4. Add more complex cruises that reuse ships.
 
 
