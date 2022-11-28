@@ -96,6 +96,24 @@ Add the missing lines so that your file looks like this:
             def __str__(self):
                 return f'{self.id}, {self.name}, {self.tonnage}'
 
+        class Cabin(models.Model):
+            id = models.BigAutoField(primary_key=True)
+            ship_id = models.ForeignKey('cruises.Ship', on_delete=models.CASCADE, related_name='cabins')
+            name = models.TextField()
+            beds = models.IntegerField()
+            deck = models.IntegerField()
+
+            def __str__(self):
+                return f'{self.id}, {self.ship_id}, {self.name}, {self.beds}, {self.deck}'
+
+        class Cruise(models.Model):
+            id = models.BigAutoField()
+            ship_id = models.ForeignKey('cruises.Ship', on_delete=models.CASCADE, related_name='cruises')
+            name = models.TextField()
+
+            def __str__(self):
+                return f'{self.id}, {self.ship_id}, {self.name}'
+
 Step 8) Now we nee to generate a migration file for Django to use when it loads the model into the schema. By having Django do this, it will generate the correct SQL needed for our database. The timestamp will be generated automatically for us for each new entry.
 
 First, we ask Django to generate the migration file with the command:
