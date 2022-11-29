@@ -1,7 +1,7 @@
-# django_cruises
-A travel agent for cruises done in Django based on the travel agent example from the O'Reilly Enterprise JavaBeans book. This is, indeed, a take on that old scenario. https://books.google.co.uk/books/about/Enterprise_JavaBeans_3_0.html?id=kD-bAgAAQBAJ&redir_esc=y, which I've also done in Ruby on Rails at https://github.com/scharlau/rails-travelagent 
+# The Django Cruise Agent - Getting Started
+A travel agent for cruises done in Django based on the travel agent example from the O'Reilly Enterprise JavaBeans book. This is a take on that old scenario described https://books.google.co.uk/books/about/Enterprise_JavaBeans_3_0.html?id=kD-bAgAAQBAJ&redir_esc=y, which I've also done in Ruby on Rails at https://github.com/scharlau/rails-travelagent 
 
-We're not interested in styling, so this is a plain site with the focus on 'how' to build the application.
+We're not interested in styling, so this is a plain site with the focus on 'how' to build the application. This is the 'basic' version. Eventually, other ones will be added as extra branches to complete the application.
 
 Step 1) We can start developing our application to display the data. Create a new project folder called 'polar_bears' and then cd into the folder via the terminal and execute these commands:
 
@@ -278,5 +278,33 @@ Things to try:
 2. Add page showing each cruise, it's ship and cabins.
 3. Add more details to the cruises with start/end dates.
 4. Add more complex cruises that reuse ships.
+
+### Add tests
+Lastly, add some tests for the models and views. Create a cruises/fixtures folder, and then add a cruises.json file. You can now dump your database data into this file with the command:
+
+        python3 manage.py dumpdata cruises --indent=4 > cruises/fixtures/cruises.json
+
+Now you can load this automatically at the start of your tests by adding this code to cruises/tests.py
+
+        from django.test import Client, TestCase
+        from .models import Ship, Cabin, Cruise
+
+        # Create your tests here.
+        class CruiseTests(TestCase):
+            fixtures = ['cruises']
+
+            def test_index(self):
+                client = Client()
+                response = client.get('')
+                #print(response.content)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "Cruise")
+                self.assertContains(response, "Bailey LLC")
+
+The fixtures line loads the fixture file. Notice we don't have to tell it where to find it, or that it has a json extension. The tests here will probably fail for you as you're unlikelyt to have 'Bailey LLC' as a cruise name. Change it to one you do have.
+
+Now add some tests for the models and any other views that you've added.
+                    
+
 
 
