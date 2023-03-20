@@ -3,7 +3,7 @@ A travel agent for cruises done in Django based on the travel agent example from
 
 We're not interested in styling, so this is a plain site with the focus on 'how' to build the application. This is the 'basic' version. Eventually, other ones will be added as extra branches to complete the application.
 
-Step 1) We can start developing our application to display the data. Create a new project folder called 'polar_bears' and then cd into the folder via the terminal and execute these commands:
+Step 1) We can start developing our application to display the data. Create a new project folder called 'django_cruises' and then cd into the folder via the terminal and execute these commands:
 
         pyenv local 3.10.7 # this sets the local version of python to 3.10.7
         python3 -m venv .venv # this creates the virtual environment for you
@@ -20,9 +20,9 @@ Step 2) Now we can start to create the site using the django admin tools. Issue 
 
         django-admin startproject cruise_agent .
 
-We're using the name 'historic_cruises' but you could use whatever seems appropriate. We'll save the 'cruises' label for later in the app. For now we're setting up the support structure for the site, which will live in a separate folder.
+We're using the name 'cruise_agent' but you could use whatever seems appropriate. We'll save the 'cruises' label for later in the app. For now we're setting up the support structure for the site, which will live in a separate folder.
 
-Step 3) We need to specify some settings for the site, which we do in the historic_cruises/settings.py file. Open this and add this line above the line for pathlib import Path:
+Step 3) We need to specify some settings for the site, which we do in the cruise_agent/settings.py file. Open this and add this line above the line for pathlib import Path:
 
         import os
 
@@ -54,9 +54,9 @@ If you're doing this on another platform, then you might need to use this instea
 If it went well, then you should see the python rocket launching your site. 
 
 ## Modelling our Data
-Step 5) The goal is to have the polar bear details on the website, which means we need to put the spreadsheet data into a database. This means creating models that map to tables in the database using Django's object relational mapping library.
+Step 5) The goal is to have the cruise data details on the website, which means we need to put the relevant data into a database. This means creating models that map to tables in the database using Django's object relational mapping library.
 
-We can now set about creating the space for our polar bear content by running this command:
+We can now set about creating the space for our cruise_agent content by running this command:
 
         python3 manage.py startapp cruises
 
@@ -79,7 +79,7 @@ There is a lot of info that we could put into each of these tables, but we'll ai
 
 We'll start with the basics for now to ensure that everything works before we move to the more complicated parts. That means we create ships with cabins attached to cruises.
 
-Add the missing lines so that your file looks like this:
+Add the missing lines so that your models.py file looks like this:
 
         from django.db import models
         from django.conf import settings
@@ -136,8 +136,7 @@ Step 9) Under the 'cruises' app create a folder 'management' and inside that cre
 Step 10) With that in place we can now use the city model to help us import the spreadsheet data. There are a few interesting points to note here:
 a) we drop the table objects, so that we can run this repeatedly, and not duplicate entries.
 b) we use paths, and relative ones, so that we don't need to know where this application sits on the file system, but will always work.
-c) as the openpyxl library goes cell by cell, we need to iterate over each cell in a row and check its column name to know which cell we're parsing so that we can assign it the correct variable name in order to create a new 'city' to save in the database.
-d) the print statements are there to track progress.
+c) the print statements are there to track progress.
 
 Put this code into that file:
 
@@ -151,7 +150,7 @@ Put this code into that file:
         from cruises .models import Cruise, Ship, Cabin
 
         class Command(BaseCommand):
-            help = 'Load data from csv'
+            help = 'Load cruise data'
 
             def handle(self, *args, **options):
                 Cruise.objects.all().delete()
@@ -253,7 +252,7 @@ Step 14) We can now open 'cruises/views.py' to add the view methods to generate 
 Step 15) Next, we need to create the actual html page to display our cruises. We'll put folders in the place that Django looks for them, which seems like extra work, but is convention, so go with it. You'll find your app, and others that you look at follow the convention, so you need to get used to it.
 
 As before, create a 'templates' folder under 'cruises' and then another 'cruises' folder under that.
-Then create a file at 'cruises/templates/cruises/city_list.html' which has this simple code:
+Then create a file at 'cruises/templates/cruises/index.html' which has this simple code:
        
        <html><head>
        <title>Pythonic cruises
